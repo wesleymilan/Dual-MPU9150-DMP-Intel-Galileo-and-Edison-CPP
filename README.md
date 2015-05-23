@@ -37,6 +37,7 @@ make
 Calibration:
 
 ./AccelCal -d 0
+
 ./MagCal -d 0
 
 The -d parameter means what device do you want to calibrate, use 0 for 0x68 (104) addressed 
