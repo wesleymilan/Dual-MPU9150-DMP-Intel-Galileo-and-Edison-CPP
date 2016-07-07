@@ -40,7 +40,7 @@ using namespace std;
 
 //  DEVICE_TO_CAILIBRATE should be set to 0 for the IMU at 0x68 and 1 for the IMU at 0x69
 
-int device = 2;
+int device = 0;
 
 MPU9150Lib MPU;                                            // the MPU9150Lib object
 
