@@ -81,6 +81,7 @@ void loop()
   
   MPU.selectDevice(device);                   // not strictly needed here as the device never changes but good form
   if (MPU.read()) {                                        // get the latest data
+    std::cout << "MPU.read success " << "\n";
     changed = false;
     if (MPU.m_rawAccel[VEC3_X] < calData.accelMinX) {
       calData.accelMinX = MPU.m_rawAccel[VEC3_X];
@@ -108,6 +109,7 @@ void loop()
     }
  
     if (changed) {
+      std::cout << "Changed.. " << "\n";
       system("clear");
       std::cout << "Calibrating Accelerometer device " << device << "\n";
       std::cout << "Move your sensor in all directions until the numbers stop to change\n";
