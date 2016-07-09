@@ -54,6 +54,8 @@ THE SOFTWARE.
 #include <linux/i2c-dev.h>
 #include "I2Cdev.h"
 
+#include <string>
+#include <iostream>
 std::string i2c_path = std::"/" + string("dev") + "/" + string("i2c-1");
 
 /** Default constructor.
