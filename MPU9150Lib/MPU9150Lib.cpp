@@ -493,6 +493,6 @@ void MPU9150Lib::printVector(float *vec)
 
 void MPU9150Lib::printAngles(float *vec)
 {
-  std::cout << "x: " << vec[VEC3_X] * RAD_TO_DEGREE << " y: " << vec[VEC3_Y] * RAD_TO_DEGREE << " z: " << vec[VEC3_Z] * RAD_TO_DEGREE << "\n";    
+  std::cout << "roll: " << vec[VEC3_X] * RAD_TO_DEGREE << " pitch: " << vec[VEC3_Y] * RAD_TO_DEGREE << " yaw: " << vec[VEC3_Z] * RAD_TO_DEGREE << "\n";    
 }
 
