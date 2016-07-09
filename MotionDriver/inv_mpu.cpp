@@ -622,7 +622,7 @@ int mpu_read_reg(unsigned char reg, unsigned char *data)
 int mpu_init(struct int_param_s *int_param)
 {
     unsigned char data[6], rev;
-    int errCode;
+    // int errCode;
     
     /* Reset device. */
     data[0] = BIT_RESET;
@@ -737,11 +737,11 @@ int mpu_init(struct int_param_s *int_param)
         //errCode = setup_compass();
         init_mag();
         
-        if (errCode != 0) {
-            #ifdef MPU_DEBUG
-                   std::cout << "Setup compass failed: " << errCode << "\n"; 
-            #endif
-        }
+        // if (errCode != 0) {
+        //     #ifdef MPU_DEBUG
+        //            std::cout << "Setup compass failed: " << errCode << "\n"; 
+        //     #endif
+        // }
 
         if (mpu_set_compass_sample_rate(10))
             return -1;
