@@ -621,7 +621,7 @@ int mpu_read_reg(unsigned char reg, unsigned char *data)
 int mpu_init(struct int_param_s *int_param)
 {
     unsigned char data[6], rev;
-    // int errCode;
+    int errCode;
     
     /* Reset device. */
     data[0] = BIT_RESET;
