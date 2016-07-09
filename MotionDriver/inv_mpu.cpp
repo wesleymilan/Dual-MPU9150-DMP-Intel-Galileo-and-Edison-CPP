@@ -529,8 +529,7 @@ void mpu_init_structures()
 #define MAX_PACKET_LENGTH (12)
 
 #ifdef AK89xx_SECONDARY
-// static int setup_compass(void);
-void init_mag(void);
+static int setup_compass(void);
 
 #define MAX_COMPASS_SAMPLE_RATE (100)
 #endif
@@ -734,14 +733,13 @@ int mpu_init(struct int_param_s *int_param)
             std::cout << "Setting up compass\n";
         #endif
 
-        //errCode = setup_compass();
-        init_mag();
+        errCode = setup_compass();
         
-        // if (errCode != 0) {
-        //     #ifdef MPU_DEBUG
-        //            std::cout << "Setup compass failed: " << errCode << "\n"; 
-        //     #endif
-        // }
+        if (errCode != 0) {
+            #ifdef MPU_DEBUG
+                   std::cout << "Setup compass failed: " << errCode << "\n"; 
+            #endif
+        }
 
         if (mpu_set_compass_sample_rate(10))
             return -1;
@@ -2340,161 +2338,118 @@ int mpu_get_dmp_state(unsigned char *enabled)
     return 0;
 }
 
-void init_mag(void) {
-    unsigned char data[4];
-    data[0] = 0x00;
-    i2c_write(0x0C,0x0A,1,data); //PowerDownMode
-    data[0] = 0x08;
-    i2c_write(0x0C,0x0A,1,data); //SelfTest
-    data[0] = 0x00;
-    i2c_write(0x0C,0x0A,1,data); //PowerDownMode
-
-    data[0] = 0x40;
-    i2c_write(0x68,0x24,1,data); //Wait for Data at Slave0
-    data[0] = 0x8C;
-    i2c_write(0x68,0x25,1,data); //Set i2c address at slave0 at 0x0C
-    data[0] = 0x02;
-    i2c_write(0x68,0x26,1,data); //Set where reading at slave 0 starts
-    data[0] = 0x88;
-    i2c_write(0x68,0x27,1,data); //set offset at start reading and enable
-    data[0] = 0x0C;
-    i2c_write(0x68,0x28,1,data); //set i2c address at slv1 at 0x0C
-    data[0] = 0x0A;
-    i2c_write(0x68,0x29,1,data); //Set where reading at slave 1 starts
-    data[0] = 0x81;
-    i2c_write(0x68,0x2A,1,data); //Enable at set length to 1
-    data[0] = 0x01;
-    i2c_write(0x68,0x64,1,data); //override register
-    data[0] = 0x03;
-    i2c_write(0x68,0x67,1,data); //set delay rate
-    data[0] = 0x80;
-    i2c_write(0x68,0x01,1,data); // ?
-    
-    data[0] = 0x04;
-    i2c_write(0x68,0x34,1,data); //set i2c slv4 delay
-    data[0] = 0x00;
-    i2c_write(0x68,0x64,1,data); //override register
-    i2c_write(0x68,0x6A,1,data); //clear user setting
-    data[0] = 0x01;
-    i2c_write(0x68,0x64,1,data); //override register
-    data[0] = 0x20;
-    i2c_write(0x68,0x6A,1,data); //enable master i2c mode
-    data[0] = 0x13;
-    i2c_write(0x68,0x34,1,data); //disable slv4
-}
-
 /* This initialization is similar to the one in ak8975.c. */
-// static int setup_compass(void)
-// {
-//     #ifdef AK89xx_SECONDARY
-//         unsigned char data[4], akm_addr;
+static int setup_compass(void)
+{
+    #ifdef AK89xx_SECONDARY
+        unsigned char data[4], akm_addr;
 
-//         mpu_set_bypass(1);
+        mpu_set_bypass(1);
 
-//         /* Find compass. Possible addresses range from 0x0C to 0x0F. */
-//         for (akm_addr = 0x0C; akm_addr <= 0x0F; akm_addr++) {
-//             int result;
-//             result = i2c_read(akm_addr, AKM_REG_WHOAMI, 1, data);
-//             if (!result && (data[0] == AKM_WHOAMI))
-//                 break;
-//         }
+        /* Find compass. Possible addresses range from 0x0C to 0x0F. */
+        for (akm_addr = 0x0C; akm_addr <= 0x0F; akm_addr++) {
+            int result;
+            result = i2c_read(akm_addr, AKM_REG_WHOAMI, 1, data);
+            if (!result && (data[0] == AKM_WHOAMI))
+                break;
+        }
 
-//         if (akm_addr > 0x0F) {
-//             /* TODO: Handle this case in all compass-related functions. */
-//             #ifdef MPU_DEBUG
-//                     std::cout << "Compass not found.\n";
-//             #endif
-//             return -1;
-//         }
+        if (akm_addr > 0x0F) {
+            /* TODO: Handle this case in all compass-related functions. */
+            #ifdef MPU_DEBUG
+                    std::cout << "Compass not found.\n";
+            #endif
+            return -1;
+        }
 
-//         st->chip_cfg.compass_addr = akm_addr;
+        st->chip_cfg.compass_addr = akm_addr;
 
-//         data[0] = AKM_POWER_DOWN;
-//         if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
-//             return -2;
-//         usleep(1);
+        data[0] = AKM_POWER_DOWN;
+        if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
+            return -2;
+        usleep(1);
 
-//         data[0] = AKM_FUSE_ROM_ACCESS;
-//         if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
-//             return -3;
-//         usleep(1);
+        data[0] = AKM_FUSE_ROM_ACCESS;
+        if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
+            return -3;
+        usleep(1);
 
-//         /* Get sensitivity adjustment data from fuse ROM. */
-//         if (i2c_read(st->chip_cfg.compass_addr, AKM_REG_ASAX, 3, data))
-//             return -4;
-//         st->chip_cfg.mag_sens_adj[0] = (long)data[0] + 128;
-//         st->chip_cfg.mag_sens_adj[1] = (long)data[1] + 128;
-//         st->chip_cfg.mag_sens_adj[2] = (long)data[2] + 128;
-//     #ifdef MPU_DEBUG
-//         std::cout << "Compass sens: " << st->chip_cfg.mag_sens_adj[0] << " ";
-//         std::cout << st->chip_cfg.mag_sens_adj[1] << " ";
-//         std::cout << st->chip_cfg.mag_sens_adj[2] << "\n";
-//     #endif
+        /* Get sensitivity adjustment data from fuse ROM. */
+        if (i2c_read(st->chip_cfg.compass_addr, AKM_REG_ASAX, 3, data))
+            return -4;
+        st->chip_cfg.mag_sens_adj[0] = (long)data[0] + 128;
+        st->chip_cfg.mag_sens_adj[1] = (long)data[1] + 128;
+        st->chip_cfg.mag_sens_adj[2] = (long)data[2] + 128;
+    #ifdef MPU_DEBUG
+        std::cout << "Compass sens: " << st->chip_cfg.mag_sens_adj[0] << " ";
+        std::cout << st->chip_cfg.mag_sens_adj[1] << " ";
+        std::cout << st->chip_cfg.mag_sens_adj[2] << "\n";
+    #endif
 
-//     data[0] = AKM_POWER_DOWN;
-//     if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
-//         return -5;
-//     usleep(1);
+    data[0] = AKM_POWER_DOWN;
+    if (i2c_write(st->chip_cfg.compass_addr, AKM_REG_CNTL, 1, data))
+        return -5;
+    usleep(1);
 
-//     mpu_set_bypass(0);
+    mpu_set_bypass(0);
 
-//     /* Set up master mode, master clock, and ES bit. */
-//     data[0] = 0x40;
-//     if (i2c_write(st->hw->addr, st->reg->i2c_mst, 1, data))
-//         return -6;
+    /* Set up master mode, master clock, and ES bit. */
+    data[0] = 0x40;
+    if (i2c_write(st->hw->addr, st->reg->i2c_mst, 1, data))
+        return -6;
 
-//     /* Slave 0 reads from AKM data registers. */
-//     data[0] = BIT_I2C_READ | st->chip_cfg.compass_addr;
-//     if (i2c_write(st->hw->addr, st->reg->s0_addr, 1, data))
-//         return -7;
+    /* Slave 0 reads from AKM data registers. */
+    data[0] = BIT_I2C_READ | st->chip_cfg.compass_addr;
+    if (i2c_write(st->hw->addr, st->reg->s0_addr, 1, data))
+        return -7;
 
-//     /* Compass reads start at this register. */
-//     data[0] = AKM_REG_ST1;
-//     if (i2c_write(st->hw->addr, st->reg->s0_reg, 1, data))
-//         return -8;
+    /* Compass reads start at this register. */
+    data[0] = AKM_REG_ST1;
+    if (i2c_write(st->hw->addr, st->reg->s0_reg, 1, data))
+        return -8;
 
-//     /* Enable slave 0, 8-byte reads. */
-//     data[0] = BIT_SLAVE_EN | 8;
-//     if (i2c_write(st->hw->addr, st->reg->s0_ctrl, 1, data))
-//         return -9;
+    /* Enable slave 0, 8-byte reads. */
+    data[0] = BIT_SLAVE_EN | 8;
+    if (i2c_write(st->hw->addr, st->reg->s0_ctrl, 1, data))
+        return -9;
 
-//     /* Slave 1 changes AKM measurement mode. */
-//     data[0] = st->chip_cfg.compass_addr;
-//     if (i2c_write(st->hw->addr, st->reg->s1_addr, 1, data))
-//         return -10;
+    /* Slave 1 changes AKM measurement mode. */
+    data[0] = st->chip_cfg.compass_addr;
+    if (i2c_write(st->hw->addr, st->reg->s1_addr, 1, data))
+        return -10;
 
-//     /* AKM measurement mode register. */
-//     data[0] = AKM_REG_CNTL;
-//     if (i2c_write(st->hw->addr, st->reg->s1_reg, 1, data))
-//         return -11;
+    /* AKM measurement mode register. */
+    data[0] = AKM_REG_CNTL;
+    if (i2c_write(st->hw->addr, st->reg->s1_reg, 1, data))
+        return -11;
 
-//     /* Enable slave 1, 1-byte writes. */
-//     data[0] = BIT_SLAVE_EN | 1;
-//     if (i2c_write(st->hw->addr, st->reg->s1_ctrl, 1, data))
-//         return -12;
+    /* Enable slave 1, 1-byte writes. */
+    data[0] = BIT_SLAVE_EN | 1;
+    if (i2c_write(st->hw->addr, st->reg->s1_ctrl, 1, data))
+        return -12;
 
-//     /* Set slave 1 data. */
-//     data[0] = AKM_SINGLE_MEASUREMENT;
-//     if (i2c_write(st->hw->addr, st->reg->s1_do, 1, data))
-//         return -13;
+    /* Set slave 1 data. */
+    data[0] = AKM_SINGLE_MEASUREMENT;
+    if (i2c_write(st->hw->addr, st->reg->s1_do, 1, data))
+        return -13;
 
-//     /* Trigger slave 0 and slave 1 actions at each sample. */
-//     data[0] = 0x03;
-//     if (i2c_write(st->hw->addr, st->reg->i2c_delay_ctrl, 1, data))
-//         return -14;
+    /* Trigger slave 0 and slave 1 actions at each sample. */
+    data[0] = 0x03;
+    if (i2c_write(st->hw->addr, st->reg->i2c_delay_ctrl, 1, data))
+        return -14;
 
-//     #ifdef MPU9150
-//         /* For the MPU9150, the auxiliary I2C bus needs to be set to VDD. */
-//         data[0] = BIT_I2C_MST_VDDIO;
-//         if (i2c_write(st->hw->addr, st->reg->yg_offs_tc, 1, data))
-//             return -15;
-//     #endif
+    #ifdef MPU9150
+        /* For the MPU9150, the auxiliary I2C bus needs to be set to VDD. */
+        data[0] = BIT_I2C_MST_VDDIO;
+        if (i2c_write(st->hw->addr, st->reg->yg_offs_tc, 1, data))
+            return -15;
+    #endif
 
-//         return 0;
-//     #else
-//         return -16;
-//     #endif
-// }
+        return 0;
+    #else
+        return -16;
+    #endif
+}
 
 /**
  *  @brief      Read raw compass data.
