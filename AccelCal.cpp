@@ -70,12 +70,13 @@ void setup()
   
   MPU.selectDevice(device);                   // select the correct device 
   MPU.useAccelCal(false);                                  // disable accel offsets
-  MPU.init(MPU_UPDATE_RATE, 5, 1, MPU_LPF_RATE);           // start the MPU
-  
+  if (!MPU.init(MPU_UPDATE_RATE, 5, 1, MPU_LPF_RATE))           // start the MPU
+  	std::cout << "stopping." << std::endl
+  	break;
   std::cout << "Calibrating device " << device << "\n";
 }
 
-void loop()
+bool loop()
 {  
   bool changed;
   
@@ -121,6 +122,10 @@ void loop()
       calData.accelValid = true;
       calLibWrite(device, calData);
     }
+    return true;
+  } else {
+  	std::cout << "MPU.read() failed" << std::endl;
+  	return false;
   }
 }
 
@@ -156,7 +161,8 @@ int main(int argc, char **argv) {
         usleep(100000);
 
         for (;;)
-            loop();
+            if (!loop())
+            	break;
 
         return 0;
     }
