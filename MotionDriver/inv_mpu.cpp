@@ -1701,6 +1701,9 @@ int mpu_set_bypass(unsigned char bypass_on)
     unsigned char tmp;
 
     if (st->chip_cfg.bypass_mode == bypass_on)
+        #ifdef MPU_DEBUG
+            std::cout << "bypass_mode already set to " << static_cast<unsigned>(bypass_on) << std::endl;
+        #endif
         return 0;
 
     if (bypass_on) {
@@ -1738,6 +1741,9 @@ int mpu_set_bypass(unsigned char bypass_on)
             return -1;
     }
     st->chip_cfg.bypass_mode = bypass_on;
+    #ifdef MPU_DEBUG
+        std::cout << "bypass_mode switch success" << std::endl;
+    #endif
     return 0;
 }
 
@@ -2343,9 +2349,16 @@ static int setup_compass(void)
 {
     #ifdef AK89xx_SECONDARY
         unsigned char data[4], akm_addr;
-
-        mpu_set_bypass(1);
-
+        int errCode;
+        
+        mpu_set_bypass(0);
+        errCode = mpu_set_bypass(1);
+        
+        if (errCode)
+            #ifdef MPU_DBUG
+                std::cout << "mpu_set_bypass(1) failed." << std::ednl;
+            #endif
+        
         /* Find compass. Possible addresses range from 0x0C to 0x0F. */
         for (akm_addr = 0x0C; akm_addr <= 0x0F; akm_addr++) {
             int result;
@@ -2391,8 +2404,13 @@ static int setup_compass(void)
         return -5;
     usleep(1);
 
-    mpu_set_bypass(0);
-
+    errCode = mpu_set_bypass(0);
+    
+    if (errCode)
+        #ifdef MPU_DEBUG
+            std::cout << "mpu_set_bypass(0) failed." << std::ednl;
+        #endif
+    
     /* Set up master mode, master clock, and ES bit. */
     data[0] = 0x40;
     if (i2c_write(st->hw->addr, st->reg->i2c_mst, 1, data))
