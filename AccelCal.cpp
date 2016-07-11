@@ -40,7 +40,7 @@ using namespace std;
 
 //  DEVICE_TO_CAILIBRATE should be set to 0 for the IMU at 0x68 and 1 for the IMU at 0x69
 
-int device = 2;
+int device = 0;
 
 MPU9150Lib MPU;                                            // the MPU9150Lib object
 
@@ -70,17 +70,19 @@ void setup()
   
   MPU.selectDevice(device);                   // select the correct device 
   MPU.useAccelCal(false);                                  // disable accel offsets
-  MPU.init(MPU_UPDATE_RATE, 5, 1, MPU_LPF_RATE);           // start the MPU
-  
+  if (!MPU.init(MPU_UPDATE_RATE, 5, 1, MPU_LPF_RATE))           // start the MPU
+  	std::cout << "stopping." << std::endl
+  	break;
   std::cout << "Calibrating device " << device << "\n";
 }
 
-void loop()
+bool loop()
 {  
   bool changed;
   
   MPU.selectDevice(device);                   // not strictly needed here as the device never changes but good form
   if (MPU.read()) {                                        // get the latest data
+    std::cout << "MPU.read success " << "\n";
     changed = false;
     if (MPU.m_rawAccel[VEC3_X] < calData.accelMinX) {
       calData.accelMinX = MPU.m_rawAccel[VEC3_X];
@@ -108,6 +110,7 @@ void loop()
     }
  
     if (changed) {
+      std::cout << "Changed.. " << "\n";
       system("clear");
       std::cout << "Calibrating Accelerometer device " << device << "\n";
       std::cout << "Move your sensor in all directions until the numbers stop to change\n";
@@ -119,8 +122,11 @@ void loop()
       calData.accelValid = true;
       calLibWrite(device, calData);
     }
+    return true;
+  } else {
+  	std::cout << "MPU.read() failed" << std::endl;
+  	return false;
   }
-  
 }
 
 void usage(char *argv_0)
@@ -155,7 +161,8 @@ int main(int argc, char **argv) {
         usleep(100000);
 
         for (;;)
-            loop();
+            if (!loop())
+            	break;
 
         return 0;
     }
